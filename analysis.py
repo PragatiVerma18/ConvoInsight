@@ -12,10 +12,54 @@ if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is not set. Please check your .env file.")
 
 
-PROFANITY_WORDS = {"damn", "hell", "shit", "fuck"}
+PROFANITY_WORDS = {
+    "damn",
+    "hell",
+    "shit",
+    "fuck",
+    "asshole",
+    "screw",
+    "idiot",
+    "bastard",
+    "bitch",
+    "douchebag",
+    "jackass",
+    "prick",
+    "dick",
+    "cunt",
+    "wanker",
+    "bollocks",
+    "piss",
+    "moron",
+    "jerk",
+    "dumbass",
+    "son of a bitch",
+    "motherfucker",
+    "arsehole",
+    "crap",
+    "bugger",
+    "twat",
+    "slut",
+    "whore",
+    "dickhead",
+    "tosser",
+    "retard",
+    "scumbag",
+    "shithead",
+    "numbnuts",
+    "dipshit",
+}
 
 
-SENSITIVE_INFO_PATTERNS = [r"\b\d{10,16}\b", r"\b(balance|account|SSN)\b"]
+SENSITIVE_INFO_PATTERNS = [
+    r"\b\d{10,16}\b",  # Detects potential account or credit card numbers (10-16 digits)
+    r"\b(?:balance|account|SSN|social security number|routing number|card number|CVV|PIN|sort code|IFSC|IBAN)\b",  # Common sensitive financial terms
+    r"\b\d{3}-\d{2}-\d{4}\b",  # SSN format (XXX-XX-XXXX)
+    r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b",  # Credit card format XXXX-XXXX-XXXX-XXXX
+    r"\b\d{9}\b",  # Generic 9-digit numbers (like some tax IDs)
+    r"\b\d{4}[-\s]?\d{6}[-\s]?\d{5}\b",  # IBAN (common format)
+    r"\b(?:dob|date of birth|address|phone number|email|security answer)\b",  # Other personal identifiers
+]
 
 
 def detect_profanity(conversation, method):

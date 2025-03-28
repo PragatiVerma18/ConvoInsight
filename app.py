@@ -1,10 +1,15 @@
 import json
+import matplotlib.pyplot as plt
 import streamlit as st
 import yaml
 
 from analysis import detect_profanity, detect_privacy_violation
 from metrics import calculate_metrics
-from visualization import plot_metrics
+from visualization import (
+    plot_pie_chart,
+    plot_bar_chart,
+    plot_dual_line_chart,
+)
 
 st.title("Call Conversation Analysis Tool")
 
@@ -44,4 +49,18 @@ if uploaded_file:
     # Tab 2: Display visualization (metrics remain constant)
     with tab2:
         st.subheader("Call Quality Metrics")
-        st.pyplot(plot_metrics(silence_pct, overtalk_pct))
+
+        chart_type = st.selectbox(
+            "Select Chart Type", ["Pie Chart", "Bar Chart", "Dual Line Chart"]
+        )
+
+        if chart_type == "Pie Chart":
+            st.pyplot(plot_pie_chart(silence_pct, overtalk_pct))
+
+        elif chart_type == "Bar Chart":
+            st.pyplot(plot_bar_chart(silence_pct, overtalk_pct))
+
+        elif chart_type == "Dual Line Chart":
+            chart = plot_dual_line_chart(conversation_data)
+            if chart:
+                st.pyplot(chart)
