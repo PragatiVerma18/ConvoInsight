@@ -115,6 +115,6 @@ Once the app is running, you can interact with the following features:
 
 ## Demo
 
-![Demo](https://github.com/user-attachments/assets/3f9564b8-5e86-496e-8198-bf5ff4efc468)
+![Demo](https://github.com/user-attachments/assets/fb04cfaa-f2fc-43b1-b05a-542abf810aa3)
 
 > Find detailed technical report [here](./technical-report.md)
