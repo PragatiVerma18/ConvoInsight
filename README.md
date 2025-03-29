@@ -110,3 +110,7 @@ Once the app is running, you can interact with the following features:
 ### 6. Insights:
 
 - Based on the analysis, the app provides insights into call quality and compliance.
+
+## Demo
+
+![Demo](https://github.com/user-attachments/assets/3f9564b8-5e86-496e-8198-bf5ff4efc468)
