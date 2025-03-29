@@ -10,6 +10,8 @@
 - **Sensitive Data Detection**: Identifies sensitive information like account numbers and SSNs.
 - **Streamlit App**: Provides an interactive UI for users to analyze call data.
 
+> Find detailed technical report [here](./technical-report.md)
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -114,3 +116,5 @@ Once the app is running, you can interact with the following features:
 ## Demo
 
 ![Demo](https://github.com/user-attachments/assets/3f9564b8-5e86-496e-8198-bf5ff4efc468)
+
+> Find detailed technical report [here](./technical-report.md)
