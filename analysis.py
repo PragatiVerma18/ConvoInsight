@@ -72,7 +72,7 @@ def detect_profanity(conversation, method, call_id):
             if words & PROFANITY_WORDS:
                 flagged_calls.append(
                     {
-                        "call_id": call_id,  # Use the file name as the call_id
+                        "call_id": call_id,
                         "speaker": utterance["speaker"],
                         "timestamp": f"{utterance['stime']} - {utterance['etime']}",
                         "flagged_utterance": utterance["text"],
@@ -103,7 +103,7 @@ def detect_privacy_violation(conversation, method, call_id):
             ):
                 flagged_calls.append(
                     {
-                        "call_id": call_id,  # Use the file name as the call_id
+                        "call_id": call_id,
                         "speaker": utterance["speaker"],
                         "timestamp": f"{utterance['stime']} - {utterance['etime']}",
                         "flagged_utterance": utterance["text"],
@@ -116,7 +116,7 @@ def detect_privacy_violation(conversation, method, call_id):
             ):
                 flagged_calls.append(
                     {
-                        "call_id": call_id,  # Use the file name as the call_id
+                        "call_id": call_id,
                         "speaker": utterance["speaker"],
                         "timestamp": f"{utterance['stime']} - {utterance['etime']}",
                         "flagged_utterance": utterance["text"],
@@ -139,13 +139,11 @@ def chatgpt_analyze(conversation, instruction, call_id):
     """Send conversation data to ChatGPT for analysis."""
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-    # Prepare the conversation text
     conversation_text = "\n".join(
         f"{idx + 1}. {utt['speaker']}: {utt['text']} (Timestamp: {utt['stime']} - {utt['etime']})"
         for idx, utt in enumerate(conversation)
     )
 
-    # Improved prompt
     prompt = f"""
     You are analyzing a debt collection call transcript. Your task is:
     {instruction}
@@ -170,7 +168,6 @@ def chatgpt_analyze(conversation, instruction, call_id):
     Ensure the output is a structured list of flagged utterances in the format specified above. Do not include any additional commentary or explanations.
     """
 
-    # Send the request to ChatGPT
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -180,10 +177,8 @@ def chatgpt_analyze(conversation, instruction, call_id):
         temperature=0,
     )
 
-    # Extract and parse the response
     flagged_results = response.choices[0].message.content.strip()
 
-    # Parse the response into a structured format
     flagged_calls = []
     current_call = {}
     for line in flagged_results.split("\n"):
