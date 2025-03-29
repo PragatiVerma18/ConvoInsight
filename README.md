@@ -53,4 +53,60 @@ OPENAI_API_KEY="your-api-key"
 streamlit run app.py
 ```
 
-This will launch a local server where users can upload call data and visualize metrics.
+> This will launch a local server where users can upload call data and visualize metrics.
+
+## Streamlit App Overview
+
+Once the app is running, you can interact with the following features:
+
+### 1. File Upload:
+
+- Upload a `.json` or `.yaml` file containing call conversation data. Find example file here - [example-conversation.json](./example-conversation.json).
+- The app will parse the file and extract relevant information such as speaker activity, timestamps, and text.
+
+### 2. Tabs for Analysis and Visualization:
+
+- The app is divided into two main tabs:
+
+- **Analysis Results**:
+
+  - Select an analysis method (`Regex` or `LLM`) to detect profanity or privacy violations.
+  - View flagged utterances in the conversation.
+  - Get feedback on whether any issues were detected.
+
+- **Call Quality Metrics**:
+  - Choose from multiple visualization options to analyze call quality:
+  - **Pie Chart**: Displays the proportions of silence, overtalk, and normal conversation.
+  - **Bar Chart**: A horizontal bar chart (Gantt Chart style) for comparing silence, overtalk, and normal conversation percentages.
+  - **Dual Line Chart**: Plots the speaking activity of both the agent and the customer over time, highlighting overtalk segments.
+
+### 3. Analysis Features:
+
+- **Profanity Detection**:
+  - Detects offensive language in the conversation using either regex-based or LLM-based methods.
+- **Privacy Violation Detection**:
+  - Identifies sensitive information such as account numbers, SSNs, and other personal identifiers.
+
+### 4. Call Quality Metrics:
+
+- **Silence Percentage**:
+
+  - Measures the proportion of the call where neither party is speaking.
+
+- **Overtalk Percentage**:
+
+  - Measures the proportion of the call where both parties are speaking simultaneously.
+
+- **Normal Conversation**:
+  - Represents the remaining portion of the call where only one party is speaking at a time.
+
+### 5. Interactive Visualizations:
+
+- The app provides intuitive visualizations to help users understand call dynamics:
+  - **Pie Chart**: For an overall breakdown of silence, overtalk, and normal conversation.
+  - **Bar Chart**: For comparing metrics side by side.
+  - **Dual Line Chart**: For analyzing speaker activity over time.
+
+### 6. Insights:
+
+- Based on the analysis, the app provides insights into call quality and compliance.
