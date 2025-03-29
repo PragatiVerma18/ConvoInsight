@@ -1,5 +1,7 @@
 import json
 import matplotlib.pyplot as plt
+import os
+import pandas as pd
 import streamlit as st
 import yaml
 
@@ -33,16 +35,61 @@ if uploaded_file:
         )
 
         if st.button("Analyze"):
+            with st.spinner("Analyzing..."):
+                call_id = os.path.splitext(os.path.basename(uploaded_file.name))[0]
+
+                if entity == "Profanity Detection":
+                    results = detect_profanity(
+                        conversation_data, analysis_method, call_id
+                    )
+                else:
+                    results = detect_privacy_violation(
+                        conversation_data, analysis_method, call_id
+                    )
+
+            st.success("Analysis Complete!")
+
             st.subheader("Analysis Results")
-            if entity == "Profanity Detection":
-                results = detect_profanity(conversation_data, analysis_method)
-            else:
-                results = detect_privacy_violation(conversation_data, analysis_method)
 
             if results:
                 st.warning("Flagged Utterances:")
-                for res in results:
-                    st.write(res)
+
+                # Display each flagged utterance in a styled table
+                for i, res in enumerate(results, start=1):
+                    st.markdown(f"### Flagged Utterance {i}")
+                    st.markdown(
+                        f"""
+                        <style>
+                            table {{
+                                width: 100%;
+                                border-collapse: collapse;
+                            }}
+                            th, td {{
+                                border: 1px solid #ddd;
+                                padding: 8px;
+                                text-align: left;
+                            }}
+                            th {{
+                                background-color: #f2f2f2;
+                                font-weight: bold;
+                            }}
+                            tr:nth-child(even) {{
+                                background-color: #f9f9f9;
+                            }}
+                            tr:hover {{
+                                background-color: #f1f1f1;
+                            }}
+                        </style>
+                        <table>
+                            <tr><th>Call ID</th><td>{res['call_id']}</td></tr>
+                            <tr><th>Speaker</th><td>{res['speaker']}</td></tr>
+                            <tr><th>Timestamp</th><td>{res['timestamp']}</td></tr>
+                            <tr><th>Flagged Utterance</th><td>{res['flagged_utterance']}</td></tr>
+                            <tr><th>Reason</th><td>{res['reason']}</td></tr>
+                        </table>
+                        """,
+                        unsafe_allow_html=True,
+                    )
             else:
                 st.success("No issues detected!")
 

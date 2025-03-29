@@ -62,7 +62,7 @@ SENSITIVE_INFO_PATTERNS = [
 ]
 
 
-def detect_profanity(conversation, method):
+def detect_profanity(conversation, method, call_id):
     """Detect profanity in calls using regex or LLM."""
     flagged_calls = []
 
@@ -70,20 +70,30 @@ def detect_profanity(conversation, method):
         for utterance in conversation:
             words = set(utterance["text"].lower().split())
             if words & PROFANITY_WORDS:
-                flagged_calls.append(utterance["text"])
+                flagged_calls.append(
+                    {
+                        "call_id": call_id,  # Use the file name as the call_id
+                        "speaker": utterance["speaker"],
+                        "timestamp": f"{utterance['stime']} - {utterance['etime']}",
+                        "flagged_utterance": utterance["text"],
+                        "reason": "Contains profanity",
+                    }
+                )
 
     elif method == "LLM":
         flagged_calls = chatgpt_analyze(
-            conversation, "Identify utterances where the speaker uses profanity."
+            conversation,
+            "Identify utterances where the speaker uses profanity. "
+            "For each flagged utterance, provide the Call ID, Speaker, Timestamp, Text, and Reason.",
+            call_id,
         )
 
     return flagged_calls
 
 
-def detect_privacy_violation(conversation, method):
+def detect_privacy_violation(conversation, method, call_id):
     """Detect privacy violations using regex or LLM."""
     flagged_calls = []
-    verified = False
 
     if method == "Regex":
         for utterance in conversation:
@@ -91,41 +101,76 @@ def detect_privacy_violation(conversation, method):
                 "date of birth" in utterance["text"].lower()
                 or "address" in utterance["text"].lower()
             ):
-                verified = True
-            if (
-                any(
-                    re.search(pattern, utterance["text"], re.IGNORECASE)
-                    for pattern in SENSITIVE_INFO_PATTERNS
+                flagged_calls.append(
+                    {
+                        "call_id": call_id,  # Use the file name as the call_id
+                        "speaker": utterance["speaker"],
+                        "timestamp": f"{utterance['stime']} - {utterance['etime']}",
+                        "flagged_utterance": utterance["text"],
+                        "reason": "Mentions sensitive information (e.g., date of birth, address)",
+                    }
                 )
-                and not verified
+            elif any(
+                re.search(pattern, utterance["text"], re.IGNORECASE)
+                for pattern in SENSITIVE_INFO_PATTERNS
             ):
-                flagged_calls.append(utterance["text"])
+                flagged_calls.append(
+                    {
+                        "call_id": call_id,  # Use the file name as the call_id
+                        "speaker": utterance["speaker"],
+                        "timestamp": f"{utterance['stime']} - {utterance['etime']}",
+                        "flagged_utterance": utterance["text"],
+                        "reason": "Contains sensitive information (e.g., account number, SSN)",
+                    }
+                )
 
     elif method == "LLM":
         flagged_calls = chatgpt_analyze(
             conversation,
-            "Identify utterances where the agent shares sensitive account information without verifying identity.",
+            "Identify utterances where sensitive information is shared without proper verification. "
+            "For each flagged utterance, provide the Call ID, Speaker, Timestamp, Text, and Reason.",
+            call_id,
         )
 
     return flagged_calls
 
 
-def chatgpt_analyze(conversation, instruction):
+def chatgpt_analyze(conversation, instruction, call_id):
     """Send conversation data to ChatGPT for analysis."""
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
+    # Prepare the conversation text
     conversation_text = "\n".join(
-        f"{utt['speaker']}: {utt['text']}" for utt in conversation
+        f"{idx + 1}. {utt['speaker']}: {utt['text']} (Timestamp: {utt['stime']} - {utt['etime']})"
+        for idx, utt in enumerate(conversation)
     )
 
+    # Improved prompt
     prompt = f"""
     You are analyzing a debt collection call transcript. Your task is:
     {instruction}
+
+    The transcript is provided below. Each utterance includes the speaker, the text, and the timestamp (start and end times). Identify and flag any utterances that meet the criteria specified in the task. For each flagged utterance, provide the following details:
+    - Call ID: {call_id}  # Use the file name as the call_id
+    - Speaker: [Speaker Name]
+    - Timestamp: [Start Time - End Time]
+    - Flagged Utterance: [Text of the utterance]
+    - Reason: [Explanation of why it was flagged]
+
     Transcript:
     {conversation_text}
-    Provide a list of flagged utterances.
+
+    Example Output:
+    - Call ID: {call_id}
+    - Speaker: Agent
+    - Timestamp: 0.0 - 5.0
+    - Flagged Utterance: "You are an idiot."
+    - Reason: "Contains profanity."
+
+    Ensure the output is a structured list of flagged utterances in the format specified above. Do not include any additional commentary or explanations.
     """
 
+    # Send the request to ChatGPT
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -135,6 +180,27 @@ def chatgpt_analyze(conversation, instruction):
         temperature=0,
     )
 
+    # Extract and parse the response
     flagged_results = response.choices[0].message.content.strip()
 
-    return flagged_results.split("\n") if flagged_results else []
+    # Parse the response into a structured format
+    flagged_calls = []
+    current_call = {}
+    for line in flagged_results.split("\n"):
+        try:
+            if line.startswith("- Call ID:"):
+                current_call["call_id"] = call_id
+            elif line.startswith("- Speaker:"):
+                current_call["speaker"] = line.split(":")[1].strip()
+            elif line.startswith("- Timestamp:"):
+                current_call["timestamp"] = line.split(":")[1].strip()
+            elif line.startswith("- Flagged Utterance:"):
+                current_call["flagged_utterance"] = line.split(":")[1].strip()
+            elif line.startswith("- Reason:"):
+                current_call["reason"] = line.split(":")[1].strip()
+                flagged_calls.append(current_call)
+                current_call = {}
+        except Exception as e:
+            print(f"Error parsing line: {line}. Error: {e}")
+
+    return flagged_calls
