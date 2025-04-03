@@ -20,8 +20,7 @@ def calculate_metrics(conversation):
 
         # Overtalk Calculation
         for j in range(i):
-            prev_stime, prev_etime, prev_speaker = (
-                utterances[j]["stime"],
+            prev_etime, prev_speaker = (
                 utterances[j]["etime"],
                 utterances[j]["speaker"],
             )

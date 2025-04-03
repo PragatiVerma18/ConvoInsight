@@ -1,3 +1,4 @@
+import json
 import re
 import openai
 import os
@@ -148,8 +149,10 @@ def chatgpt_analyze(conversation, instruction, call_id):
     You are analyzing a debt collection call transcript. Your task is:
     {instruction}
 
-    The transcript is provided below. Each utterance includes the speaker, the text, and the timestamp (start and end times). Identify and flag any utterances that meet the criteria specified in the task. For each flagged utterance, provide the following details:
-    - Call ID: {call_id}  # Use the file name as the call_id
+    The transcript is provided below. Each utterance includes the speaker, the text, and the 
+    timestamp (start and end times). Identify and flag any utterances that meet the criteria 
+    specified in the task. For each flagged utterance, provide the following details:
+    - Call ID: {call_id}
     - Speaker: [Speaker Name]
     - Timestamp: [Start Time - End Time]
     - Flagged Utterance: [Text of the utterance]
@@ -158,44 +161,37 @@ def chatgpt_analyze(conversation, instruction, call_id):
     Transcript:
     {conversation_text}
 
-    Example Output:
-    - Call ID: {call_id}
-    - Speaker: Agent
-    - Timestamp: 0.0 - 5.0
-    - Flagged Utterance: "You are an idiot."
-    - Reason: "Contains profanity."
-
-    Ensure the output is a structured list of flagged utterances in the format specified above. Do not include any additional commentary or explanations.
+    Ensure the output is a structured JSON array of flagged utterances, where each element is an object with the following keys:
+    - call_id
+    - speaker
+    - timestamp
+    - flagged_utterance
+    - reason
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are an AI compliance expert."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0,
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an AI compliance expert."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+        )
 
-    flagged_results = response.choices[0].message.content.strip()
+        # Extract the content and remove code block markers
+        raw_content = response.choices[0].message.content.strip()
+        if raw_content.startswith("```json"):
+            raw_content = raw_content[7:]  # Remove the opening ```json
+        if raw_content.endswith("```"):
+            raw_content = raw_content[:-3]  # Remove the closing ```
 
-    flagged_calls = []
-    current_call = {}
-    for line in flagged_results.split("\n"):
-        try:
-            if line.startswith("- Call ID:"):
-                current_call["call_id"] = call_id
-            elif line.startswith("- Speaker:"):
-                current_call["speaker"] = line.split(":")[1].strip()
-            elif line.startswith("- Timestamp:"):
-                current_call["timestamp"] = line.split(":")[1].strip()
-            elif line.startswith("- Flagged Utterance:"):
-                current_call["flagged_utterance"] = line.split(":")[1].strip()
-            elif line.startswith("- Reason:"):
-                current_call["reason"] = line.split(":")[1].strip()
-                flagged_calls.append(current_call)
-                current_call = {}
-        except Exception as e:
-            print(f"Error parsing line: {line}. Error: {e}")
+        flagged_calls = json.loads(raw_content)
+        return flagged_calls
 
-    return flagged_calls
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON response: {e}")
+        return []
+    except Exception as e:
+        print(f"Unexpected error during API call: {e}")
+        return []
